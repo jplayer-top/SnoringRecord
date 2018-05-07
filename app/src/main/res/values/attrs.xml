@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="CompassServant">
+        <attr name="cs_color_commander" format="integer"/>
+        <attr name="cs_color1" format="color"/>
+        <attr name="cs_color2" format="color"/>
+        <attr name="cs_color3" format="color"/>
+        <attr name="cs_color4" format="color"/>
+        <attr name="cs_decibel" format="integer"/>
+        <attr name="cs_outer_circle" format="dimension"/>
+        <attr name="cs_galaxy_degree" format="float"/>
+        <attr name="cs_tick_mark_length" format="dimension"/>
+        <attr name="cs_text_size" format="dimension"/>
+    </declare-styleable>
+</resources>

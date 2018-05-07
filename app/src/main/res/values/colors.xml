@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#769aff</color>
+    <color name="colorPrimaryDark">#dd769aff</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="cinnabar_red">#F15250</color>
+    <color name="oxygen_green">#35D599</color>
+    <color name="pale_blue">#7bbef7</color>
+    <color name="tension_grey">#55666666</color>
+    <color name="girl_pink">#F3A5AF</color>
+    <color name="alice_blue">#80BFF5</color>
+    <color name="blair_grey">#BDBDBD</color>
+    <color name="google_red">#EA4335</color>
+    <color name="google_yellow">#FBBC05</color>
+    <color name="google_blue">#4285F4</color>
+    <color name="google_green">#34A853</color>
+    <color name="holy_pink">#FC2572</color>
+    <color name="ion_pink">#FF2B66</color>
+    <color name="oxygen_yellow">#FF9911</color>
+    <color name="purple">#510069</color>
+</resources>

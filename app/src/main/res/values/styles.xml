@@ -1,0 +1,45 @@
+<resources>
+
+    <!-- Base application theme. -->
+    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+        <!-- Customize your theme here. -->
+        <item name="colorPrimary">@color/colorPrimary</item>
+        <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
+        <item name="colorAccent">@color/colorPrimary</item>
+    </style>
+    <!--Dialog 样式-->
+    <!--start-->
+    <style name="dialog_custom" parent="@android:style/Theme.Dialog">
+        <item name="android:windowNoTitle">false</item>       <!--是否有标题-->
+        <item name="android:windowIsTranslucent">true</item> <!--是否半透明-->
+        <item name="android:windowBackground">@android:color/transparent</item> <!--窗口背景色透明-->
+        <item name="android:background">#00000000</item>
+        <item name="android:colorBackgroundCacheHint">@null</item>
+        <item name="android:backgroundDimEnabled">false</item> <!--背景是否模糊显示-->
+    </style>
+
+    <style name="AnimBottom">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowEnterAnimation">@anim/slide_in_bottom</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_bottom</item>
+    </style>
+
+    <style name="AnimFade">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowEnterAnimation">@anim/fade_in</item>
+        <item name="android:windowExitAnimation">@anim/fade_out</item>
+    </style>
+
+    <style name="AnimTop">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowEnterAnimation">@anim/slide_in_top</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_top</item>
+    </style>
+
+    <style name="AnimCenter">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowEnterAnimation">@anim/slide_in_center</item>
+        <item name="android:windowExitAnimation">@anim/slide_out_center</item>
+    </style>
+    <!--end-->
+</resources>
