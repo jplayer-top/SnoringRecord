@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -42,6 +43,7 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import top.jplayer.audio.bean.RecordSleepBean;
 import top.jplayer.audio.dialog.CurrentRecordDialog;
+import top.jplayer.audio.dialog.ValueSureDialog;
 import top.jplayer.audio.utils.AndroidScheduler;
 import top.jplayer.audio.utils.CustomMp3Recorder;
 import top.jplayer.audio.utils.DateUtils;
@@ -67,6 +69,8 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
     Button wavePlay;
     @BindView(R.id.recordPause)
     Button recordPause;
+    @BindView(R.id.btnValue)
+    Button btnValue;
     @BindView(R.id.webView)
     Button webView;
     @BindView(R.id.recordShow)
@@ -89,7 +93,7 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
     int curPosition;
     private Handler mUIHandler;
     private Disposable subscribe;
-    private List<Integer> countList;
+    private List<Integer> countStatus;
     private Disposable subscribe1;
     private Disposable subscribe2;
 
@@ -102,7 +106,7 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
         compass_servant.setServantListener(this);
         compass_servant.setPointerDecibel(118);
         integerList = new ArrayList<>();
-        countList = new ArrayList<>();
+        countStatus = new ArrayList<>();
         countSnoring = new ArrayList<>();
         mRecordSleepBean = new RecordSleepBean();
         mRecordSleepBean.account = "account";
@@ -150,10 +154,23 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
         });
     }
 
+    private int setValue = 60;
 
-    @OnClick({R.id.recordShow, R.id.webView, R.id.record, R.id.stop, R.id.reset, R.id.wavePlay, R.id.recordPause})
+    @OnClick({R.id.btnValue, R.id.recordShow, R.id.webView, R.id.record, R.id.stop, R.id.reset, R.id.wavePlay, R.id
+            .recordPause})
     public void onClick(View view) {
         switch (view.getId()) {
+            case R.id.btnValue:
+                ValueSureDialog dialog = new ValueSureDialog();
+                dialog.setSureListener(new ValueSureDialog.SureListener() {
+                    @Override
+                    public void onSureListener(int value) {
+                        setValue = value;
+                        btnValue.setText(String.format(Locale.CHINA, "设置阀值（当前 %d）", setValue));
+                    }
+                });
+                dialog.show(getSupportFragmentManager(), "value");
+                break;
             case R.id.webView:
                 Intent intent = new Intent(this, ActivityWebView.class);
                 Bundle value = new Bundle();
@@ -170,7 +187,6 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
             case R.id.stop:
                 resolveStopRecord();
                 break;
-
             case R.id.reset:
                 resolveResetPlay();
             case R.id.wavePlay:
@@ -181,8 +197,11 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
         }
     }
 
-    int count = 0;
-    int countQuick = 0;
+    int countOnce = 0;
+    int countMore = 0;
+    /**
+     * 是否处于打鼾状态
+     */
     boolean isStartVibrate = false;
 
     /**
@@ -224,19 +243,20 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
          * 2.
          *
          */
+
         subscribe = Observable.interval(1, TimeUnit.SECONDS).subscribe(new Consumer<Long>() {
             @Override
             public void accept(Long aLong) throws Exception {
                 if (integerList.size() > 0) {
-                    count = 0;
-                    countQuick = 0;
+                    countOnce = 0;
+                    countMore = 0;
                     Observable.fromIterable(integerList).subscribe(new Consumer<Integer>() {
                         @Override
                         public void accept(Integer integer) throws Exception {
-                            if (integer > 60) {
-                                count += integer;
+                            if (integer > setValue) {
+                                countOnce += integer;
                             }
-                            countQuick += integer;
+                            countMore += integer;
                         }
                     }, new Consumer<Throwable>() {
                         @Override
@@ -244,21 +264,24 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
 
                         }
                     });
-                    Log.e("asdasd", Arrays.toString(integerList.toArray()));
-                    int i = count / 3;
-                    int iQuick = countQuick / integerList.size();
-                    if (i > 60) {
-                        countList.add(i);
+                    Log.e("一秒数据", Arrays.toString(integerList.toArray()));
+
+                    int iOnce = countOnce / 3;
+                    int iMore = countMore / integerList.size();
+
+
+                    if (iOnce > setValue) {
+                        countStatus.add(iOnce);
                     }
-                    if (isStartVibrate && iQuick > 60 && iQuick < 70) {
-                        countSnoring.add(iQuick);
+                    if (isStartVibrate && iMore > setValue && iMore < setValue + 10) {
+                        countSnoring.add(iMore);
                         RxVibrateTool.vibrateOnce(MainActivity.this, 300);
                     }
                     integerList.clear();
                 }
             }
         });
-        countList.clear();
+        countStatus.clear();
         /**
          * 检测是否处于打鼾状态
          */
@@ -268,11 +291,13 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
                 /**
                  *
                  */
-                if (5 <= countList.size()) {
+                if (5 <= countStatus.size()) {
+                    countSnoring.add(countStatus.size());
+                    if (!isStartVibrate) {
+                        RxVibrateTool.vibrateOnce(MainActivity.this, 1000);
+                    }
+                    countStatus.clear();
                     isStartVibrate = true;
-                    countSnoring.add(countList.size());
-                    RxVibrateTool.vibrateOnce(MainActivity.this, 1000);
-                    countList.clear();
                 } else {
                     isStartVibrate = false;
                 }
@@ -488,6 +513,7 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
         reset.setEnabled(false);
         recordShow.setEnabled(false);
         webView.setEnabled(false);
+        btnValue.setEnabled(false);
     }
 
     private void resolveStopUI() {
@@ -498,6 +524,7 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
         reset.setEnabled(true);
         recordShow.setEnabled(true);
         webView.setEnabled(true);
+        btnValue.setEnabled(true);
     }
 
     private void resolvePlayUI() {

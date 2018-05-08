@@ -123,6 +123,16 @@
                 android:visibility="gone"/>
 
             <Button
+                android:id="@+id/btnValue"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="20dp"
+                android:layout_weight="1"
+                android:background="@drawable/bg_btn_login_selected"
+                android:text="设置阀值（当前 60）"
+                android:textColor="@color/white"/>
+
+            <Button
                 android:id="@+id/recordShow"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
