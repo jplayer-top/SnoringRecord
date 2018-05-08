@@ -217,6 +217,13 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
             }
         });
         integerList.clear();
+        countSnoring.clear();
+        /**
+         * 打鼾状态检测，一秒轮循检测，监测机制
+         * 1.大于60分贝的话记录，一秒内超过某分贝即为打鼾(一秒内记录值大约为20次，超过三次，低于十五次即为打鼾，否则为其他状态)
+         * 2.
+         *
+         */
         subscribe = Observable.interval(1, TimeUnit.SECONDS).subscribe(new Consumer<Long>() {
             @Override
             public void accept(Long aLong) throws Exception {
@@ -239,12 +246,11 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
                     });
                     Log.e("asdasd", Arrays.toString(integerList.toArray()));
                     int i = count / 3;
+                    int iQuick = countQuick / integerList.size();
                     if (i > 60) {
                         countList.add(i);
                     }
-                    int iQuick = countQuick / integerList.size();
-
-                    if (isStartVibrate && iQuick > 60) {
+                    if (isStartVibrate && iQuick > 60 && iQuick < 70) {
                         countSnoring.add(iQuick);
                         RxVibrateTool.vibrateOnce(MainActivity.this, 300);
                     }
@@ -253,14 +259,18 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
             }
         });
         countList.clear();
-        //震动
-        final int period = 10;
-        subscribe1 = Observable.interval(period, TimeUnit.SECONDS).subscribe(new Consumer<Long>() {
+        /**
+         * 检测是否处于打鼾状态
+         */
+        subscribe1 = Observable.interval(10, TimeUnit.SECONDS).subscribe(new Consumer<Long>() {
             @Override
             public void accept(Long aLong) throws Exception {
-                //震动
+                /**
+                 *
+                 */
                 if (5 <= countList.size()) {
                     isStartVibrate = true;
+                    countSnoring.add(countList.size());
                     RxVibrateTool.vibrateOnce(MainActivity.this, 1000);
                     countList.clear();
                 } else {
@@ -268,6 +278,9 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
                 }
             }
         });
+        /**
+         * 开启超时检测打鼾，一分钟后  一定时间内开启，否则关闭打鼾状态
+         */
         subscribe2 = Observable.timer(1, TimeUnit.MINUTES)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidScheduler.mainThread())
@@ -369,6 +382,7 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
         } else {
             recordDaoUtil.insertbean(mRecordSleepBean);
         }
+        countSnoring.clear();
     }
 
     /**
@@ -472,6 +486,8 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
         stop.setEnabled(true);
         wavePlay.setEnabled(false);
         reset.setEnabled(false);
+        recordShow.setEnabled(false);
+        webView.setEnabled(false);
     }
 
     private void resolveStopUI() {
@@ -480,6 +496,8 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
         recordPause.setEnabled(false);
         wavePlay.setEnabled(true);
         reset.setEnabled(true);
+        recordShow.setEnabled(true);
+        webView.setEnabled(true);
     }
 
     private void resolvePlayUI() {
