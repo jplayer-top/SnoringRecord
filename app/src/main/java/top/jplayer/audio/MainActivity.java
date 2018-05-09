@@ -213,7 +213,7 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
      * 开始录音
      */
     @SuppressLint("HandlerLeak")
-    private void resolveRecord() {
+    public void resolveRecord() {
         filePath = FileUtils.getAppPath();
         File file = new File(filePath);
         if (!file.exists()) {

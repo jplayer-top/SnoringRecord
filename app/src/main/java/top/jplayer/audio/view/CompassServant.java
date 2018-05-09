@@ -76,15 +76,14 @@ public class CompassServant extends View {
     }
 
     public CompassServant(Context context, AttributeSet attrs, int defStyleAttr) {
-        this(context, attrs, defStyleAttr, -1);
+        super(context, attrs, defStyleAttr);
         init(context, attrs, defStyleAttr, -1);
     }
 
     @TargetApi(21)
-    public CompassServant(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
+    public CompassServant(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         init(context, attrs, defStyleAttr, defStyleRes);
-        // startPointerAnim();
     }
 
     private void init(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
