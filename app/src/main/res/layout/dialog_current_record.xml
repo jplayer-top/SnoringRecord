@@ -152,7 +152,7 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="测评:        "
+                    android:text="打鼾睡眠占比:"
                     android:textColor="@color/white"
                     android:textSize="15dp"/>
 
@@ -162,7 +162,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="end"
-                    android:text="状态良好"
+                    android:text="1%"
                     android:textColor="@color/white"
                     android:textSize="15sp"/>
 

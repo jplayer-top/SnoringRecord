@@ -1,9 +1,13 @@
 package top.jplayer.audio;
 
-import android.app.Application;
+import android.content.Context;
 import android.os.Build;
 import android.os.StrictMode;
+import android.support.multidex.MultiDex;
+import android.support.multidex.MultiDexApplication;
 
+import com.tencent.bugly.Bugly;
+import com.tencent.bugly.beta.Beta;
 import com.vondear.rxtools.RxTool;
 
 /**
@@ -11,7 +15,7 @@ import com.vondear.rxtools.RxTool;
  * rul
  */
 
-public class AudioApplication extends Application {
+public class AudioApplication extends MultiDexApplication {
 
     public static AudioApplication application;
 
@@ -24,5 +28,16 @@ public class AudioApplication extends Application {
             StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
             StrictMode.setVmPolicy(builder.build());
         }
+        Bugly.init(this, "4b3faed579", false);
+    }
+    @Override
+    protected void attachBaseContext(Context base) {
+        super.attachBaseContext(base);
+        // you must install multiDex whatever tinker is installed!
+        MultiDex.install(base);
+
+
+        // 安装tinker
+        Beta.installTinker();
     }
 }

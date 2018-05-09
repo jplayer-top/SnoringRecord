@@ -45,6 +45,7 @@ public class CurrentRecordDialog extends BaseCustomDialogFragment {
                 mTvEndTime.setText(recordBean.endTime);
                 mTvStartTime.setText(recordBean.startTime);
                 mTvSleepTime.setText(recordBean.sleepTime);
+                mTvRecord.setText(recordBean.account);
             }
         }
     }

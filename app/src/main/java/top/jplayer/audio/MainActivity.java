@@ -2,6 +2,7 @@ package top.jplayer.audio;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -37,6 +38,7 @@ import java.util.concurrent.TimeUnit;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
@@ -96,6 +98,8 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
     private List<Integer> countStatus;
     private Disposable subscribe1;
     private Disposable subscribe2;
+    private Camera mCamera;
+    private Disposable subscribe3;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -109,9 +113,8 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
         countStatus = new ArrayList<>();
         countSnoring = new ArrayList<>();
         mRecordSleepBean = new RecordSleepBean();
-        mRecordSleepBean.account = "account";
         AndPermission.with(this)
-                .permission(Permission.WRITE_EXTERNAL_STORAGE, Permission.RECORD_AUDIO)
+                .permission(Permission.WRITE_EXTERNAL_STORAGE, Permission.RECORD_AUDIO, Permission.CAMERA)
                 .onGranted(new Action() {
                     @Override
                     public void onAction(List<String> permissions) {
@@ -199,10 +202,12 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
 
     int countOnce = 0;
     int countMore = 0;
+    int count = 0;
     /**
      * 是否处于打鼾状态
      */
     boolean isStartVibrate = false;
+    boolean isFlash = false;
 
     /**
      * 开始录音
@@ -250,11 +255,13 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
                 if (integerList.size() > 0) {
                     countOnce = 0;
                     countMore = 0;
+                    count = 0;
                     Observable.fromIterable(integerList).subscribe(new Consumer<Integer>() {
                         @Override
                         public void accept(Integer integer) throws Exception {
                             if (integer > setValue) {
                                 countOnce += integer;
+                                ++count;
                             }
                             countMore += integer;
                         }
@@ -273,14 +280,18 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
                     if (iOnce > setValue) {
                         countStatus.add(iOnce);
                     }
-                    if (isStartVibrate && iMore > setValue && iMore < setValue + 10) {
+                    Log.e("Count", count + "--");
+                    if (isStartVibrate && iMore > setValue && count <= (16 >= integerList.size() ? integerList.size()
+                            : 16) && !isPause) {
                         countSnoring.add(iMore);
                         RxVibrateTool.vibrateOnce(MainActivity.this, 300);
+
                     }
                     integerList.clear();
                 }
             }
         });
+
         countStatus.clear();
         /**
          * 检测是否处于打鼾状态
@@ -293,7 +304,7 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
                  */
                 if (5 <= countStatus.size()) {
                     countSnoring.add(countStatus.size());
-                    if (!isStartVibrate) {
+                    if (!isStartVibrate && !isPause) {
                         RxVibrateTool.vibrateOnce(MainActivity.this, 1000);
                     }
                     countStatus.clear();
@@ -320,6 +331,24 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
 
                     }
                 });
+        subscribe3 = Flowable.interval(500, TimeUnit.MILLISECONDS).subscribe(new Consumer<Long>() {
+            @Override
+            public void accept(Long aLong) throws Exception {
+                if (countSnoring.size() >= 15) {
+                    isFlash = !isFlash;
+                    if (isFlash) {
+                        openCameraFlash();
+                    } else {
+                        closeCameraFlash();
+                    }
+                }
+            }
+        }, new Consumer<Throwable>() {
+            @Override
+            public void accept(Throwable throwable) throws Exception {
+
+            }
+        });
         try {
             mRecorder.start(new CustomMp3Recorder.VolumeListener() {
                 @Override
@@ -328,8 +357,10 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
                         @Override
                         public void run() {
                             int value = volume.intValue();
-                            compass_servant.setPointerDecibel(value);
-                            integerList.add(value);
+                            if (!isPause) {
+                                compass_servant.setPointerDecibel(value);
+                                integerList.add(value);
+                            }
                         }
                     });
                 }
@@ -350,6 +381,14 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
     Date mStartDate;
     Date mEndDate;
 
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (mIsRecord) {
+            resolveStopRecord();
+        }
+    }
+
     /**
      * 停止录音
      */
@@ -363,6 +402,9 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
         }
         if (!subscribe2.isDisposed()) {
             subscribe2.dispose();
+        }
+        if (!subscribe3.isDisposed()) {
+            subscribe3.dispose();
         }
         isStartVibrate = false;
         if (mRecorder != null && mRecorder.isRecording()) {
@@ -379,9 +421,13 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
 
         mRecordSleepBean.day = DateUtils.getCurrentDate();
 
-        mRecordSleepBean.sleepSnoring = countSnoring.size() + " 次";
+        int cCount = countSnoring.size();
+        mRecordSleepBean.sleepSnoring = cCount + " 次";
 
-        mRecordSleepBean.sleepTime = DateUtils.formatLongToTimeStr(mEndDate.getTime() - mStartDate.getTime());
+        long dur = mEndDate.getTime() - mStartDate.getTime();
+        mRecordSleepBean.sleepTime = DateUtils.formatLongToTimeStr(dur);
+        float v = (float) cCount * 100000 / dur;
+        mRecordSleepBean.account = String.format(Locale.CHINA, "%.2f%%", v);
 
         CurrentRecordDialog dialog = new CurrentRecordDialog();
         Bundle arguments = new Bundle();
@@ -403,6 +449,7 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
             recordBean.endTime = mRecordSleepBean.endTime;
             recordBean.day = mRecordSleepBean.day;
             recordBean.sleepTime = mRecordSleepBean.sleepTime;
+            recordBean.account = mRecordSleepBean.account;
             recordDaoUtil.updatebean(recordBean);
         } else {
             recordDaoUtil.insertbean(mRecordSleepBean);
@@ -449,6 +496,8 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
         resolveNormalUI();
     }
 
+    boolean isPause = false;
+
     /**
      * 暂停
      */
@@ -461,13 +510,39 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
             audioWave.setPause(false);
             mRecorder.setPause(false);
             recordPause.setText("暂停");
+            isPause = false;
         } else {
             audioWave.setPause(true);
             mRecorder.setPause(true);
             recordPause.setText("继续");
+            isPause = true;
         }
     }
 
+    public void openCameraFlash() {
+        try {
+            mCamera = Camera.open();
+            Camera.Parameters mParameters;
+            mParameters = mCamera.getParameters();
+            mParameters.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+            mCamera.setParameters(mParameters);
+        } catch (Exception ex) {
+        }
+
+    }
+
+    public void closeCameraFlash() {
+        try {
+            if (mCamera != null) {
+                Camera.Parameters mParameters;
+                mParameters = mCamera.getParameters();
+                mParameters.setFlashMode(Camera.Parameters.FLASH_MODE_OFF);
+                mCamera.setParameters(mParameters);
+                mCamera.release();
+            }
+        } catch (Exception ex) {
+        }
+    }
 
     private long mBackPressed;
     private static final int TIME_INTERVAL = 2000;
