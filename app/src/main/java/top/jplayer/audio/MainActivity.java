@@ -455,6 +455,7 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
             recordDaoUtil.insertbean(mRecordSleepBean);
         }
         countSnoring.clear();
+        closeCameraFlash();
     }
 
     /**
@@ -516,6 +517,7 @@ public class MainActivity extends AppCompatActivity implements CompassServant.Se
             mRecorder.setPause(true);
             recordPause.setText("继续");
             isPause = true;
+            closeCameraFlash();
         }
     }
 
